@@ -13,7 +13,8 @@ app.use(cors());
 app.use(express.json());
 // Routes use කිරීම
 app.use('/api/auth', require('./routes/auth'));
-
+app.use('/api/tournaments', require('./routes/tournaments'));
+app.use('/api/teams', require('./routes/teams'));
 // Base Route
 app.get('/', (req, res) => {
   res.send('Campus Esports API is running...');
