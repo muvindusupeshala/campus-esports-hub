@@ -9,6 +9,15 @@ router.get('/:tournamentId', async (req, res) => {
     try {
         const tournamentId = req.params.tournamentId;
 
+        // 🛑 Safe Guard: Dummy ID එකක් හෝ valid ObjectId එකක් නෙමෙයි නම් 500 crash වීම වැළැක්වීම
+        if (!tournamentId || tournamentId === 'sample-tournament-id' || tournamentId.length !== 24) {
+            return res.json({
+                success: true,
+                count: 0,
+                data: []
+            });
+        }
+
         // 1. Fetch all completed matches for the tournament
         const matches = await Match.find({ 
             tournament: tournamentId, 
@@ -22,10 +31,11 @@ router.get('/:tournamentId', async (req, res) => {
         const stats = {};
         teams.forEach(team => {
             stats[team._id] = {
-                team: team,
-                played: 0,
-                won: 0,
-                lost: 0,
+                teamId: team._id,
+                teamName: team.name || team.teamName || 'Unknown Team',
+                matchesPlayed: 0,
+                wins: 0,
+                losses: 0,
                 points: 0
             };
         });
@@ -33,8 +43,8 @@ router.get('/:tournamentId', async (req, res) => {
         // 3. Calculate wins, losses, and points
         matches.forEach(match => {
             if (match.winner && stats[match.winner]) {
-                stats[match.winner].played += 1;
-                stats[match.winner].won += 1;
+                stats[match.winner].matchesPlayed += 1;
+                stats[match.winner].wins += 1;
                 stats[match.winner].points += 3; // 3 points for a win
 
                 // Find the loser
@@ -43,8 +53,8 @@ router.get('/:tournamentId', async (req, res) => {
                     : match.teamA.toString();
 
                 if (stats[loserId]) {
-                    stats[loserId].played += 1;
-                    stats[loserId].lost += 1;
+                    stats[loserId].matchesPlayed += 1;
+                    stats[loserId].losses += 1;
                 }
             }
         });
@@ -52,9 +62,15 @@ router.get('/:tournamentId', async (req, res) => {
         // 4. Convert to array and sort by points (descending)
         const leaderboard = Object.values(stats).sort((a, b) => b.points - a.points);
 
-        res.json(leaderboard);
+        // Front-end එකට පහසු වෙන්න success format එකකින් return කිරීම
+        res.json({
+            success: true,
+            count: leaderboard.length,
+            data: leaderboard
+        });
+
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
