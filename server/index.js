@@ -15,6 +15,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tournaments', require('./routes/tournaments'));
 app.use('/api/teams', require('./routes/teams'));
+app.use('/api/matches', require('./routes/matches'));
 // Base Route
 app.get('/', (req, res) => {
   res.send('Campus Esports API is running...');
