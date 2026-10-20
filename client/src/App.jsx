@@ -1,21 +1,29 @@
 import React from 'react';
 import Navbar from './components/Navbar';
+import TournamentsPage from './pages/TournamentsPage';
+import TeamsPage from './pages/TeamsPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-12">
       <Navbar />
       
-      <main className="p-8 max-w-7xl mx-auto">
+      <main className="p-8 max-w-7xl mx-auto space-y-12">
         <div className="text-center">
           <h1 className="text-4xl font-extrabold my-4 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500">
-            Welcome to Campus Esports Hub 🎮
+            Campus Esports Hub 🎮
           </h1>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto">
             Manage tournaments, create teams, schedule matches, and track leaderboard standings in real time!
           </p>
         </div>
+
+        {/* Tournaments Section */}
+        <TournamentsPage />
+
+        {/* Teams Section */}
+        <TeamsPage />
 
         {/* Leaderboard Section */}
         <LeaderboardPage />
