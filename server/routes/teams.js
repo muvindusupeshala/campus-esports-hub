@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const Team = require('../models/team'); // Model path එක වෙනස් නම් බලන්න
+const Team = require('../models/Team');
 
-// @route   GET /api/teams
-// @desc    Get all teams
+// GET all teams
 router.get('/', async (req, res) => {
   try {
     const teams = await Team.find();
@@ -13,20 +12,35 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   POST /api/teams
-// @desc    Register a new team (auth middleware එක මෙතනින් අයින් කළා)
+// POST create team with members
 router.post('/', async (req, res) => {
   try {
-    const { name, captainName, contactEmail } = req.body;
+    const { teamName, captain, game, members } = req.body;
 
     const newTeam = new Team({
-      name,
-      captainName,
-      contactEmail
+      teamName: teamName || req.body.name,
+      captain: captain || req.body.captainName,
+      game: game || req.body.gameName,
+      membersCount: members ? members.length : 0,
+      members: members || []
     });
 
     const savedTeam = await newTeam.save();
     res.status(201).json({ success: true, data: savedTeam });
+  } catch (err) {
+    console.error("Error creating team:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+// @route   DELETE /api/teams/:id
+// @desc    Delete a team by ID
+router.delete('/:id', async (req, res) => {
+  try {
+    const deletedTeam = await Team.findByIdAndDelete(req.params.id);
+    if (!deletedTeam) {
+      return res.status(404).json({ success: false, message: 'Team එක හමු වූයේ නැත.' });
+    }
+    res.json({ success: true, message: 'Team එක සාර්ථකව delete කරන ලදී!' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

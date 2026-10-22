@@ -1,162 +1,213 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import API from '../services/api';
-import { Users, UserPlus, Shield, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Users, UserPlus, Trash2 } from 'lucide-react';
 
 const TeamsPage = () => {
   const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
-
-  // New Team Form State - Matching Schema Keys
   const [formData, setFormData] = useState({
     teamName: '',
     captain: '',
-    game: 'Valorant', // Default game selection
+    game: '',
+    members: [{ name: '', campusId: '' }]
   });
-
-  const fetchTeams = async () => {
-    try {
-      setLoading(true);
-      const res = await API.get('/teams');
-      setTeams(res.data.data || res.data);
-      setError('');
-    } catch (err) {
-      console.error("Failed to fetch teams", err);
-      setError("Teams ලෝඩ් කරගැනීමට නොහැකි විය. Backend එක active ද බලන්න.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchTeams();
   }, []);
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const fetchTeams = async () => {
+    try {
+      const res = await API.get('/teams');
+      setTeams(res.data.data || []);
+    } catch (err) {
+      console.error("Error fetching teams", err);
+    }
   };
 
-  const handleCreateTeam = async (e) => {
+  const handleMemberChange = (index, field, value) => {
+    const updatedMembers = [...formData.members];
+    updatedMembers[index][field] = value;
+    setFormData({ ...formData, members: updatedMembers });
+  };
+
+  const addMemberField = () => {
+    setFormData({
+      ...formData,
+      members: [...formData.members, { name: '', campusId: '' }]
+    });
+  };
+
+  const removeMemberField = (index) => {
+    const updatedMembers = formData.members.filter((_, i) => i !== index);
+    setFormData({ ...formData, members: updatedMembers });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await API.post('/teams', formData);
-      setSuccessMsg('Team එක සාර්ථකව Register කරන ලදී! 🛡️');
-      setFormData({ teamName: '', captain: '', game: 'Valorant' });
+      setFormData({
+        teamName: '',
+        captain: '',
+        game: '',
+        members: [{ name: '', campusId: '' }]
+      });
       fetchTeams();
-      setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
-      console.error("Failed to create team", err);
-      setError(err.response?.data?.message || err.response?.data?.error || 'Team එක create කිරීමේදී දෝෂයක් ඇති විය.');
+      console.error("Error creating team", err);
+    }
+  };
+
+  const handleDelete = async (teamId) => {
+    if (window.confirm("ඔයාට විශ්වාසද මේ Team එක delete කරන්න ඕනේ කියලා?")) {
+      try {
+        await API.delete(`/teams/${teamId}`);
+        fetchTeams(); // List එක auto refresh කරන්න
+      } catch (err) {
+        console.error("Error deleting team", err);
+      }
     }
   };
 
   return (
-    <div className="space-y-8 mt-6">
-      {/* Header */}
-      <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-xl">
-        <div className="flex items-center space-x-3">
-          <Users className="w-8 h-8 text-indigo-400" />
-          <div>
-            <h2 className="text-2xl font-bold text-white tracking-wide">CAMPUS TEAMS</h2>
-            <p className="text-slate-400 text-sm">Register and manage esports squads across faculties</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Notifications */}
-      {successMsg && (
-        <div className="flex items-center space-x-2 bg-emerald-950/50 border border-emerald-800 text-emerald-300 p-4 rounded-lg">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span>{successMsg}</span>
-        </div>
-      )}
-      {error && (
-        <div className="flex items-center space-x-2 bg-red-950/50 border border-red-800 text-red-300 p-4 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-red-400" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Register Team Form */}
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-xl">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
-          <UserPlus className="w-5 h-5 text-indigo-400" />
+    <div className="space-y-8">
+      {/* Registration Form */}
+      <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+        <h2 className="text-2xl font-bold text-white mb-6 flex items-center space-x-2">
+          <UserPlus className="text-yellow-500" />
           <span>Register a New Team</span>
-        </h3>
-        <form onSubmit={handleCreateTeam} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-slate-400 text-sm mb-1">Team Name</label>
-            <input
-              type="text"
-              name="teamName"
-              value={formData.teamName}
-              onChange={handleInputChange}
-              required
-              placeholder="e.g. Team Thunder"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="block text-slate-400 text-sm mb-1">Captain Name</label>
-            <input
-              type="text"
-              name="captain"
-              value={formData.captain}
-              onChange={handleInputChange}
-              required
-              placeholder="e.g. Hirusha Nirmana"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="block text-slate-400 text-sm mb-1">Esports Game</label>
-            <input
-              type="text"
-              name="game"
-              value={formData.game}
-              onChange={handleInputChange}
-              required
-              placeholder="e.g. Valorant / PUBG Mobile"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-          <div className="md:col-span-3 flex justify-end">
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold px-6 py-2 rounded-lg transition-all shadow-md"
-            >
-              Register Team
-            </button>
-          </div>
-        </form>
-      </div>
+        </h2>
 
-      {/* Registered Teams Grid */}
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-xl">
-        <h3 className="text-lg font-semibold text-white mb-4">Registered Teams</h3>
-        {loading ? (
-          <div className="text-center py-8 text-slate-400 animate-pulse">Loading Teams... 🛡️</div>
-        ) : teams.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {teams.map((team) => (
-              <div key={team._id} className="bg-slate-950 border border-slate-800 rounded-lg p-5 hover:border-slate-700 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="bg-purple-950 text-purple-400 text-xs font-bold px-2.5 py-1 rounded border border-purple-800 flex items-center space-x-1">
-                    <Shield className="w-3.5 h-3.5" />
-                    <span>{team.game || 'Esports'}</span>
-                  </span>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-slate-400 text-sm mb-1">Team Name</label>
+              <input
+                type="text"
+                required
+                value={formData.teamName}
+                onChange={(e) => setFormData({ ...formData, teamName: e.target.value })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-400 text-sm mb-1">Captain Name</label>
+              <input
+                type="text"
+                required
+                value={formData.captain}
+                onChange={(e) => setFormData({ ...formData, captain: e.target.value })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-400 text-sm mb-1">Game</label>
+              <input
+                type="text"
+                required
+                value={formData.game}
+                onChange={(e) => setFormData({ ...formData, game: e.target.value })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white"
+              />
+            </div>
+          </div>
+
+          {/* Dynamic Members Section */}
+          <div className="border-t border-slate-800 pt-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-slate-200">
+                Team Members ({formData.members.length})
+              </h3>
+              <button
+                type="button"
+                onClick={addMemberField}
+                className="text-xs bg-slate-800 hover:bg-slate-700 text-yellow-400 px-3 py-1.5 rounded-lg border border-slate-700"
+              >
+                + Add Member
+              </button>
+            </div>
+
+            {formData.members.map((member, index) => (
+              <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 items-center bg-slate-950 p-3 rounded-lg border border-slate-800">
+                <input
+                  type="text"
+                  placeholder={`Member ${index + 1} Name`}
+                  required
+                  value={member.name}
+                  onChange={(e) => handleMemberChange(index, 'name', e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded px-3 py-1.5 text-white text-sm"
+                />
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    placeholder="Campus ID (e.g. IT210098)"
+                    required
+                    value={member.campusId}
+                    onChange={(e) => handleMemberChange(index, 'campusId', e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded px-3 py-1.5 text-white text-sm"
+                  />
+                  {formData.members.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeMemberField(index)}
+                      className="text-red-400 hover:text-red-300 p-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-                <h4 className="text-xl font-bold text-white mb-2">{team.teamName || team.name}</h4>
-                <p className="text-slate-400 text-sm">Captain: <span className="text-indigo-400 font-medium">{team.captain || team.captainName || 'N/A'}</span></p>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-8 text-slate-500">
-            තවම teams කිසිවක් register කර නැත. ඉහත form එකෙන් පළමු team එක එකතු කරන්න!
+
+          <button
+            type="submit"
+            className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-slate-950 font-bold py-2.5 rounded-lg hover:opacity-90 transition-opacity"
+          >
+            Register Team
+          </button>
+        </form>
+      </div>
+
+      {/* Teams Display Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {teams.map((team) => (
+          <div key={team._id} className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-3">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-bold text-white">{team.teamName}</h3>
+                <p className="text-slate-400 text-sm">Game: <span className="text-yellow-400">{team.game}</span></p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full border border-slate-700">
+                  Captain: {team.captain}
+                </span>
+                {/* Delete Button එක මෙතැනින් එකතු කර ඇත */}
+                <button
+                  onClick={() => handleDelete(team._id)}
+                  className="text-red-400 hover:text-red-300 hover:bg-slate-800 p-1.5 rounded-lg transition-colors"
+                  title="Delete Team"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {team.members && team.members.length > 0 && (
+              <div className="border-t border-slate-800 pt-3">
+                <p className="text-xs font-semibold text-slate-400 mb-2">Members ({team.members.length}):</p>
+                <div className="space-y-1">
+                  {team.members.map((m, idx) => (
+                    <div key={idx} className="flex justify-between text-xs text-slate-300 bg-slate-950 px-3 py-1.5 rounded">
+                      <span>{m.name}</span>
+                      <span className="text-slate-500">{m.campusId}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        ))}
       </div>
     </div>
   );

@@ -1,11 +1,16 @@
 const mongoose = require('mongoose');
 
-const teamSchema = new mongoose.Schema({
-    teamName: { type: String, required: true, unique: true },
-    game: { type: String, required: true }, // e.g., PUBG Mobile, Valorant, Dota 2
-    captain: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    createdAt: { type: Date, default: Date.now }
+const MemberSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  campusId: { type: String, required: true }
 });
 
-module.exports = mongoose.model('Team', teamSchema);
+const TeamSchema = new mongoose.Schema({
+  teamName: { type: String, required: true },
+  captain: { type: String, required: true },
+  game: { type: String, required: true },
+  membersCount: { type: Number, default: 0 },
+  members: [MemberSchema] // Array of team members
+}, { timestamps: true });
+
+module.exports = mongoose.model('Team', TeamSchema);
