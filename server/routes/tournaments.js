@@ -1,39 +1,37 @@
 const express = require('express');
 const router = express.Router();
-const Tournament = require('../models/tournament');
-const auth = require('../middleware/auth'); // Auth middleware eka import kirima
-
-// @route   POST /api/tournaments
-// @desc    Create a new tournament (Protected)
-router.post('/', auth, async (req, res) => {
-    try {
-        const { title, game, description, startDate, endDate } = req.body;
-
-        const newTournament = new Tournament({
-            title,
-            game,
-            description,
-            startDate,
-            endDate,
-            organizer: req.user.id // Token එකෙන් කෙලින්ම Organizer ID එක ලබා ගැනීම
-        });
-
-        const savedTournament = await newTournament.save();
-        res.status(201).json(savedTournament);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+const Tournament = require('../models/tournament'); // Model path එක හරියටම තියෙනවද බලන්න
 
 // @route   GET /api/tournaments
-// @desc    Get all tournaments (Public route)
+// @desc    Get all tournaments
 router.get('/', async (req, res) => {
-    try {
-        const tournaments = await Tournament.find().populate('organizer', 'username email');
-        res.json(tournaments);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    const tournaments = await Tournament.find();
+    res.json({ success: true, data: tournaments });
+  } catch (err) {
+    console.error("Error fetching tournaments:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// @route   POST /api/tournaments
+// @desc    Create a tournament
+router.post('/', async (req, res) => {
+  try {
+    const { title, game, startDate } = req.body;
+
+    const newTournament = new Tournament({
+      title,
+      game,
+      startDate
+    });
+
+    const savedTournament = await newTournament.save();
+    res.status(201).json({ success: true, data: savedTournament });
+  } catch (err) {
+    console.error("Error creating tournament:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;

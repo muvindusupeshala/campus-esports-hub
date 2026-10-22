@@ -1,54 +1,45 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/user');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// @route   POST /api/auth/register
+// @desc    Register user & return JWT token
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    
+    // Create token payload
+    const payload = {
+      user: {
+        name,
+        email
+      }
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET || 'secretkey123', { expiresIn: '7d' });
+    res.status(201).json({ success: true, token, message: "User registered successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // @route   POST /api/auth/login
-// @desc    Authenticate user & get token
+// @desc    Authenticate user & return JWT token
 router.post('/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-        // User කෙනෙක් ඉන්නවද බලන්න
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
+    const payload = {
+      user: {
+        email
+      }
+    };
 
-        // Password එක match වෙනවද බලන්න
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
-
-        // JWT Payload එක හැදීම
-        const payload = {
-            id: user._id,
-            role: user.role
-        };
-
-        // Token එක sign කිරීම (expires in 1 day)
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: '1d' },
-            (err, token) => {
-                if (err) throw err;
-                res.json({
-                    token,
-                    user: {
-                        id: user._id,
-                        username: user.username,
-                        email: user.email,
-                        role: user.role
-                    }
-                });
-            }
-        );
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    const token = jwt.sign(payload, process.env.JWT_SECRET || 'secretkey123', { expiresIn: '7d' });
+    res.json({ success: true, token, message: "Login successful" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;
