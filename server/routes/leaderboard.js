@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Match = require('../models/match');
+const Match = require('../models/Match');
 const Team = require('../models/team');
 
 // @route   GET /api/leaderboard/:tournamentId

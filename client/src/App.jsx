@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import TournamentsPage from './pages/TournamentsPage';
 import TeamsPage from './pages/TeamsPage';
 import LeaderboardPage from './pages/LeaderboardPage';
+import MatchesPage from './pages/MatchesPage';
 import AuthPage from './pages/AuthPage';
 
 function App() {
@@ -29,6 +30,9 @@ function App() {
 
             {/* Teams Section */}
             <TeamsPage />
+
+            {/* Match Schedule & Results Section */}
+            <MatchesPage />
 
             {/* Leaderboard Section */}
             <LeaderboardPage />
