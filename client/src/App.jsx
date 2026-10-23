@@ -1,48 +1,63 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import TournamentsPage from './pages/TournamentsPage';
+import Dashboard from "./pages/DashboardPage";
 import TeamsPage from './pages/TeamsPage';
-import LeaderboardPage from './pages/LeaderboardPage';
 import MatchesPage from './pages/MatchesPage';
-import AuthPage from './pages/AuthPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
-  const [currentTab, setCurrentTab] = useState('dashboard'); // 'dashboard' or 'auth'
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-12">
-      <Navbar setCurrentTab={setCurrentTab} currentTab={currentTab} />
-      
-      <main className="p-8 max-w-7xl mx-auto space-y-12">
-        {currentTab === 'dashboard' ? (
-          <>
-            <div className="text-center">
-              <h1 className="text-4xl font-extrabold my-4 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500">
-                Campus Esports Hub 🎮
-              </h1>
-              <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                Manage tournaments, create teams, schedule matches, and track leaderboard standings in real time!
-              </p>
-            </div>
+    <Router>
+      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <Routes>
+            {/* Public Route */}
+            <Route path="/login" element={<LoginPage />} />
 
-            {/* Tournaments Section */}
-            <TournamentsPage />
+            {/* Protected Routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teams"
+              element={
+                <ProtectedRoute>
+                  <TeamsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/matches"
+              element={
+                <ProtectedRoute>
+                  <MatchesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute>
+                  <LeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
 
-            {/* Teams Section */}
-            <TeamsPage />
-
-            {/* Match Schedule & Results Section */}
-            <MatchesPage />
-
-            {/* Leaderboard Section */}
-            <LeaderboardPage />
-          </>
-        ) : (
-          /* Authentication Section */
-          <AuthPage onLoginSuccess={() => setCurrentTab('dashboard')} />
-        )}
-      </main>
-    </div>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
