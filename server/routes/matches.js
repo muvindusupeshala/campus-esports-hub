@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Match = require('../models/Match');
 
-// GET all matches
+// @route   GET /api/matches
+// @desc    Get all matches
 router.get('/', async (req, res) => {
   try {
     const matches = await Match.find().sort({ scheduledTime: 1 });
@@ -12,7 +13,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// CREATE a new match
+// @route   POST /api/matches
+// @desc    Schedule a new match
 router.post('/', async (req, res) => {
   try {
     const { tournament, teamA, teamB, scheduledTime } = req.body;
@@ -24,15 +26,33 @@ router.post('/', async (req, res) => {
   }
 });
 
-// UPDATE match score/status/winner
+// @route   PUT /api/matches/:id
+// @desc    Update match status, scores, and determine winner
 router.put('/:id', async (req, res) => {
   try {
-    const { scoreA, scoreB, status, winner } = req.body;
-    const updatedMatch = await Match.findByIdAndUpdate(
-      req.params.id,
-      { scoreA, scoreB, status, winner },
-      { new: true }
-    );
+    const { scoreA, scoreB, status } = req.body;
+    const match = await Match.findById(req.params.id);
+
+    if (!match) {
+      return res.status(404).json({ success: false, message: 'Match එක හමු වූයේ නැත.' });
+    }
+
+    if (scoreA !== undefined) match.scoreA = Number(scoreA);
+    if (scoreB !== undefined) match.scoreB = Number(scoreB);
+    if (status) match.status = status;
+
+    // Auto determine winner if completed
+    if (status === 'Completed' || match.status === 'Completed') {
+      if (match.scoreA > match.scoreB) {
+        match.winner = match.teamA;
+      } else if (match.scoreB > match.scoreA) {
+        match.winner = match.teamB;
+      } else {
+        match.winner = 'Draw';
+      }
+    }
+
+    const updatedMatch = await match.save();
     res.json({ success: true, data: updatedMatch });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
