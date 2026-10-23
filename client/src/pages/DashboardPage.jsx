@@ -1,17 +1,41 @@
-import React from 'react';
-import { Trophy, Users, Calendar, Award } from 'lucide-react';
+import React, { useState } from 'react';
+import UserProfile from '../components/UserProfile';
+import EditProfileModal from '../components/EditProfileModal';
+import { Trophy, Users, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user')) || null;
+    } catch {
+      return null;
+    }
+  });
+  
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
   return (
-    <div className="space-y-8">
-      {/* Banner */}
+    <div className="space-y-6">
+      {/* User Welcome Profile Section (UserProfile component එක ඇතුළේ ඇති button එකෙන්ම Edit Profile modal එක open වේ) */}
+      <UserProfile user={user} onEditClick={() => setIsEditOpen(true)} />
+
+      {/* Edit Profile Modal */}
+      {isEditOpen && user && (
+        <EditProfileModal
+          user={user}
+          setUser={setUser}
+          onClose={() => setIsEditOpen(false)}
+        />
+      )}
+
+      {/* Main Banner */}
       <div className="bg-gradient-to-r from-yellow-500/20 via-orange-500/10 to-slate-900 border border-slate-800 p-8 rounded-2xl">
         <h1 className="text-3xl font-extrabold text-white mb-2">
           Campus Esports Tournament Hub
         </h1>
         <p className="text-slate-400 max-w-2xl">
-          Welcome to the official esports tournament portal. Manage teams, view match schedules, and track leaderboard standings in real time!
+          Manage teams, view match schedules, and track leaderboard standings in real time!
         </p>
       </div>
 
